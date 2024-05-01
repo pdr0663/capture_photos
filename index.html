@@ -89,10 +89,12 @@
             // Read EXIF data from the image
             EXIF.getData(blob, function() {
                 // Modify EXIF data
-                this.UserComment = JSON.stringify({
-                    title: title || '',
-                    description: description || ''
-                });
+//                this.UserComment = JSON.stringify({
+//                    title: title || '',
+//                    description: description || ''
+//});
+                this.UserComment = "test comment";
+                
                 
                 // Save the Blob using FileSaver.js
                 saveAs(blob, fileName);
