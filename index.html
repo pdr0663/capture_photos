@@ -13,8 +13,8 @@
     Subject: <input type="text" id="subject"><br>
     <button id="save-btn">Save Image</button>
 
-    <script src="./js/piexif.js"></script>
-    <script src="./js/exif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.0/piexif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.0/exif.js"></script>
 
     <script>
         const video = document.getElementById('video');
@@ -76,8 +76,8 @@
             a.click();
         }
 
-         // Convert base64 data to ArrayBuffer
-         function base64ToArrayBuffer(base64) {
+        // Convert base64 data to ArrayBuffer
+        function base64ToArrayBuffer(base64) {
             const binary_string =  window.atob(base64.split(',')[1]);
             const len = binary_string.length;
             const bytes = new Uint8Array(len);
@@ -86,7 +86,7 @@
             }
             return bytes.buffer;
         }
-        
+
         // Event listeners
         captureBtn.addEventListener('click', () => captureImage());
         saveBtn.addEventListener('click', () => saveImage());
