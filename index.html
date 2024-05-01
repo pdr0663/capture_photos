@@ -97,7 +97,7 @@
                 // You can set other fields similarly
 
                 // Update the EXIF data in the image blob
-                var updatedExifBinary = EXIF.pretty(this, exifData);
+                var updatedExifBinary = EXIF.stringFromIFD(this.exifData);
                 var updatedExifBlob = new Blob([updatedExifBinary], { type: 'image/jpeg' });
 
                 // Replace the original blob with the blob containing updated EXIF data
