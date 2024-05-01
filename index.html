@@ -93,10 +93,10 @@
                 title: title || '',
                 description: description || ''
             });
-            const updatedExif = EXIF.writeArrayBuffer(exifData);
 
-            // Create Blob with updated EXIF data
-            const blobWithExif = new Blob([updatedExif], { type: 'image/jpeg' });
+            // Create a new Blob with the modified EXIF data
+            const blobWithExif = new Blob([base64ToArrayBuffer(base64Image)], { type: 'image/jpeg' });
+            EXIF.setXMPData(blobWithExif, EXIF.serialize(exifData));
 
             // Save the Blob using FileSaver.js
             saveAs(blobWithExif, fileName);
