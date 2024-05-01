@@ -76,21 +76,17 @@
             a.click();
         }
 
-        // Fetch base64 data and convert to ArrayBuffer
-        async function fetchBase64ToBuffer(base64Data) {
-            return new Promise(resolve => {
-                fetch(base64Data)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            resolve(reader.result);
-                        };
-                        reader.readAsArrayBuffer(blob);
-                    });
-            });
+         // Convert base64 data to ArrayBuffer
+         function base64ToArrayBuffer(base64) {
+            const binary_string =  window.atob(base64.split(',')[1]);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
         }
-
+        
         // Event listeners
         captureBtn.addEventListener('click', () => captureImage());
         saveBtn.addEventListener('click', () => saveImage());
