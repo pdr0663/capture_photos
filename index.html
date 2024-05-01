@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Capture</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
 </head>
 <body>
     <h1>Photo Capture</h1>
@@ -58,7 +59,7 @@
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
+            const imageData = canvas.toDataURL('image/jpeg'); // Use JPEG format for better EXIF support
 
             // Save the image with metadata
             saveImage(imageData, folderName);
@@ -72,7 +73,7 @@
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
             const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'image/png' });
+            const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
             // Get metadata values
             const title = document.getElementById('title').value.trim();
@@ -83,10 +84,23 @@
             if (title) {
                 fileName += `_${title}`;
             }
-            fileName += '.png';
+            fileName += '.jpg'; // Use JPEG format for better EXIF support
+
+            // Add metadata to EXIF
+            const exifData = {
+                "ImageDescription": description || "",
+                "DateTime": new Date().toISOString(),
+                "DateTimeOriginal": new Date().toISOString(),
+                "DateTimeDigitized": new Date().toISOString(),
+            };
+
+            // Set EXIF data
+            const exifObj = { 'UserComment': JSON.stringify(exifData) };
+            const exifBytes = ExifRestorer.exifArrayBuffer(blob, exifObj);
+            const blobWithExif = new Blob([exifBytes], { type: 'image/jpeg' });
 
             // Save the Blob using FileSaver.js
-            saveAs(blob, fileName);
+            saveAs(blobWithExif, fileName);
         }
     </script>
 </body>
