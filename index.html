@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Capture</title>
+</head>
+<body>
+    <h1>Photo Capture</h1>
+    <form id="metadataForm">
+        <label for="folderName">Enter Folder Name:</label>
+        <input type="text" id="folderName" name="folderName" required><br><br>
+        <button type="submit">Start Capturing Photos</button>
+    </form>
+
+    <div id="cameraContainer" style="display: none;">
+        <video id="video" width="400" height="300" autoplay></video><br>
+        <button id="captureBtn">Capture</button>
+    </div>
+
+    <script>
+        const metadataForm = document.getElementById('metadataForm');
+        const cameraContainer = document.getElementById('cameraContainer');
+        const captureBtn = document.getElementById('captureBtn');
+
+        let folderName = '';
+
+        metadataForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            folderName = metadataForm.elements.folderName.value.trim();
+            // Show camera container
+            cameraContainer.style.display = 'block';
+            // Hide metadata form
+            metadataForm.style.display = 'none';
+            startCamera();
+        });
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    const video = document.getElementById('video');
+                    video.srcObject = stream;
+                })
+                .catch(function(err) {
+                    console.error('Error accessing the camera: ', err);
+                });
+        }
+
+        captureBtn.addEventListener('click', function() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+
+            // Save the image with metadata
+            saveImage(imageData, folderName);
+        });
+
+        function saveImage(imageData, folderName) {
+            // Here you can use libraries like FileSaver.js to save the image locally
+            // For simplicity, let's assume you have a server-side endpoint to handle image saving
+
+            // For example, using fetch to send the image data to a server-side endpoint
+            fetch('/users/paul.riley/save-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    imageData: imageData,
+                    folderName: folderName
+                })
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    console.log('Image saved successfully!');
+                } else {
+                    console.error('Error saving image.');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error saving image: ', error);
+            });
+        }
+    </script>
+</body>
+</html>
