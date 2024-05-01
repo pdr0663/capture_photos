@@ -11,6 +11,10 @@
     <form id="metadataForm">
         <label for="folderName">Enter Folder Name:</label>
         <input type="text" id="folderName" name="folderName" required><br><br>
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title"><br><br>
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
         <button type="submit">Start Capturing Photos</button>
     </form>
 
@@ -70,8 +74,18 @@
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: 'image/png' });
 
+            // Get metadata values
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+
+            // Construct file name with metadata
+            let fileName = `${folderName}_${new Date().getTime()}`;
+            if (title) {
+                fileName += `_${title}`;
+            }
+            fileName += '.png';
+
             // Save the Blob using FileSaver.js
-            const fileName = `${folderName}_${new Date().getTime()}.png`;
             saveAs(blob, fileName);
         }
     </script>
