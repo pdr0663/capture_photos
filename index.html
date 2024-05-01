@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Capture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
     <h1>Photo Capture</h1>
@@ -60,30 +61,18 @@
         });
 
         function saveImage(imageData, folderName) {
-            // Here you can use libraries like FileSaver.js to save the image locally
-            // For simplicity, let's assume you have a server-side endpoint to handle image saving
+            // Convert base64 image data to Blob
+            const byteCharacters = atob(imageData.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'image/png' });
 
-            // For example, using fetch to send the image data to a server-side endpoint
-            fetch('/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    imageData: imageData,
-                    folderName: folderName
-                })
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    console.log('Image saved successfully!');
-                } else {
-                    console.error('Error saving image.');
-                }
-            })
-            .catch(function(error) {
-                console.error('Error saving image: ', error);
-            });
+            // Save the Blob using FileSaver.js
+            const fileName = `${folderName}_${new Date().getTime()}.png`;
+            saveAs(blob, fileName);
         }
     </script>
 </body>
