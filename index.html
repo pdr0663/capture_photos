@@ -93,8 +93,8 @@
 //                    title: title || '',
 //                    description: description || ''
 //});
-                this.Title = "test title";
-                this.Subject = "test subject";
+                EXIF.setTag(this, 'Title', "test title");
+                EXIF.setTag(this, 'Subject', "test subject");
                 
                 
                 // Save the Blob using FileSaver.js
