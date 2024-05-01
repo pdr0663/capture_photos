@@ -3,119 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Capture</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+    <title>Camera Capture with EXIF Metadata</title>
 </head>
 <body>
-    <h1>Photo Capture</h1>
-    <form id="metadataForm">
-        <label for="folderName">Enter Folder Name:</label>
-        <input type="text" id="folderName" name="folderName" required><br><br>
-        <label for="title">Title:</label>
-        <input type="text" id="title" name="title"><br><br>
-        <label for="description">Description:</label><br>
-        <textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
-        <button type="submit">Start Capturing Photos</button>
-    </form>
+    <h1>Camera Capture with EXIF Metadata</h1>
+    <video id="video" width="640" height="480" autoplay></video><br>
+    <button id="capture-btn">Capture Image</button><br>
+    Title: <input type="text" id="title"><br>
+    Subject: <input type="text" id="subject"><br>
+    <button id="save-btn">Save Image</button>
 
-    <div id="cameraContainer" style="display: none;">
-        <video id="video" width="400" height="300" autoplay></video><br>
-        <button id="captureBtn">Capture</button>
-    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.0/piexif.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.0/exif.js"></script>
 
     <script>
-        const metadataForm = document.getElementById('metadataForm');
-        const cameraContainer = document.getElementById('cameraContainer');
-        const captureBtn = document.getElementById('captureBtn');
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const titleInput = document.getElementById('title');
+        const subjectInput = document.getElementById('subject');
+        let stream;
 
-        let folderName = '';
-
-        metadataForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            folderName = metadataForm.elements.folderName.value.trim();
-            // Show camera container
-            cameraContainer.style.display = 'block';
-            // Hide metadata form
-            metadataForm.style.display = 'none';
-            startCamera();
-        });
-
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    const video = document.getElementById('video');
-                    video.srcObject = stream;
-                })
-                .catch(function(err) {
-                    console.error('Error accessing the camera: ', err);
-                });
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+            }
         }
 
-        captureBtn.addEventListener('click', function() {
-            const video = document.getElementById('video');
+        // Capture image from video stream
+        async function captureImage() {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/jpeg'); // Use JPEG format for better EXIF support
-
-            // Save the image with metadata
-            saveImage(imageData, folderName);
-        });
-
-        function saveImage(imageData, folderName) {
-            // Convert base64 image data to Blob
-            const byteCharacters = atob(imageData.split(',')[1]);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-            // Get metadata values
-            const title = document.getElementById('title').value.trim();
-            const description = document.getElementById('description').value.trim();
-
-            // Construct file name with metadata
-            let fileName = `${folderName}_${new Date().getTime()}`;
-            if (title) {
-                fileName += `_${title}`;
-            }
-            fileName += '.jpg'; // Use JPEG format for better EXIF support
-
-            // Read EXIF data from the image
-            EXIF.getData(blob, function() {
-                // Get the existing EXIF data
-                var exifData = EXIF.getAllTags(this);
-
-                // Modify EXIF data (replace or add new fields)
-                exifData.Title = 'My Title'; // Example: Set the Make field to 'MyCamera'
-                exifData.Subject = 'My Subject'; // Example: Set the Model field to 'ModelXYZ'
-                // You can set other fields similarly
-
-                // Update the EXIF data in the image blob
-                var updatedExifBinary = EXIF.stringFromIFD(this.exifData);
-                var updatedExifBlob = new Blob([updatedExifBinary], { type: 'image/jpeg' });
-
-                // Replace the original blob with the blob containing updated EXIF data
-                this.blob = updatedExifBlob;
-                
-                // Save the Blob using FileSaver.js
-                saveAs(blob, fileName);
-            });
-
-
-// Assuming `blob` contains the image data
-
-// Read EXIF data from the image
-EXIF.getData(blob, function() {
-});
-
-
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg');
         }
+
+        // Save image with updated EXIF metadata
+        async function saveImage() {
+            const imageData = await captureImage();
+            const exifObj = piexif.load(await fetchBase64ToBuffer(imageData));
+            const exifBytes = piexif.dump(exifObj);
+
+            // Update Title and Subject fields
+            const exifStr = piexif.insert(piexif.load(imageData), {
+                "0th": {
+                    270: titleInput.value || '',
+                    40095: subjectInput.value || ''
+                }
+            });
+            const newImage = piexif.insert(exifStr, exifBytes);
+            const newImageData = piexif.dump(newImage);
+
+            // Convert data URI to Blob
+            const byteString = atob(imageData.split(',')[1]);
+            const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
+
+            // Save image to file
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([newImageData], { type: 'image/jpeg' }));
+            a.download = 'captured_image.jpg';
+            a.click();
+        }
+
+        // Fetch base64 data and convert to ArrayBuffer
+        async function fetchBase64ToBuffer(base64Data) {
+            return new Promise(resolve => {
+                fetch(base64Data)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            resolve(reader.result);
+                        };
+                        reader.readAsArrayBuffer(blob);
+                    });
+            });
+        }
+
+        // Event listeners
+        captureBtn.addEventListener('click', () => captureImage());
+        saveBtn.addEventListener('click', () => saveImage());
+
+        // Initialize camera when the page loads
+        initCamera();
     </script>
 </body>
 </html>
