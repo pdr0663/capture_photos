@@ -88,18 +88,33 @@
 
             // Read EXIF data from the image
             EXIF.getData(blob, function() {
-                // Modify EXIF data
-//                this.UserComment = JSON.stringify({
-//                    title: title || '',
-//                    description: description || ''
-//});
-                EXIF.setTag(this, 'Title', "test title");
-                EXIF.setTag(this, 'Subject', "test subject");
-                
+                // Get the existing EXIF data
+                var exifData = EXIF.getAllTags(this);
+
+                // Modify EXIF data (replace or add new fields)
+                exifData.Make = 'MyCamera'; // Example: Set the Make field to 'MyCamera'
+                exifData.Model = 'ModelXYZ'; // Example: Set the Model field to 'ModelXYZ'
+                // You can set other fields similarly
+
+                // Update the EXIF data in the image blob
+                var updatedExifBinary = EXIF.pretty(this, exifData);
+                var updatedExifBlob = new Blob([updatedExifBinary], { type: 'image/jpeg' });
+
+                // Replace the original blob with the blob containing updated EXIF data
+                this.blob = updatedExifBlob;
                 
                 // Save the Blob using FileSaver.js
                 saveAs(blob, fileName);
             });
+
+
+// Assuming `blob` contains the image data
+
+// Read EXIF data from the image
+EXIF.getData(blob, function() {
+});
+
+
         }
     </script>
 </body>
