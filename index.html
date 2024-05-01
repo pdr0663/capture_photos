@@ -86,21 +86,30 @@
             }
             fileName += '.jpg'; // Use JPEG format for better EXIF support
 
-            // Add metadata to EXIF
-            const exifData = {
-                "ImageDescription": description || "",
-                "DateTime": new Date().toISOString(),
-                "DateTimeOriginal": new Date().toISOString(),
-                "DateTimeDigitized": new Date().toISOString(),
-            };
+            // Modify EXIF data
+            const base64Image = imageData.replace(/^data:image\/(jpeg|png);base64,/, '');
+            const exifData = EXIF.readFromBinaryFile(base64ToArrayBuffer(base64Image));
+            exifData.UserComment = JSON.stringify({
+                title: title || '',
+                description: description || ''
+            });
+            const updatedExif = EXIF.writeArrayBuffer(exifData);
 
-            // Set EXIF data
-            const exifObj = { 'UserComment': JSON.stringify(exifData) };
-            const exifBytes = ExifRestorer.exifArrayBuffer(blob, exifObj);
-            const blobWithExif = new Blob([exifBytes], { type: 'image/jpeg' });
+            // Create Blob with updated EXIF data
+            const blobWithExif = new Blob([updatedExif], { type: 'image/jpeg' });
 
             // Save the Blob using FileSaver.js
             saveAs(blobWithExif, fileName);
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
         }
     </script>
 </body>
